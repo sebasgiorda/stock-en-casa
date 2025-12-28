@@ -3,116 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockEnCasa v2</title>
+    <title>StockEnCasa Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
-        .dark { background-color: #0f172a; color: #f8fafc; }
-        .dark .card { background-color: #1e293b; border-color: #334155; }
-        .card { transition: transform 0.2s; }
-        .card:active { transform: scale(0.98); }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        :root { --primary: #2563eb; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
+        
+        /* Glassmorphism & Effects */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+        }
+        .dark { background-color: #020617; color: #f8fafc; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
-    <div class="min-h-screen flex flex-col md:flex-row">
-        
-        <aside class="w-full md:w-64 bg-white dark:bg-slate-900 border-b md:border-r border-slate-200 dark:border-slate-800 p-6 flex flex-row md:flex-col justify-between items-center md:items-start">
-            <div>
-                <div class="flex items-center gap-2 mb-0 md:mb-8">
-                    <i data-lucide="package" class="text-blue-600"></i>
-                    <h1 class="text-xl font-bold tracking-tight">StockEnCasa</h1>
+<body class="bg-[#f8fafc]">
+    <div class="flex min-h-screen">
+        <nav class="hidden md:flex flex-col w-72 bg-white dark:bg-[#0f172a] border-r border-slate-200 dark:border-slate-800 p-8 fixed h-full">
+            <div class="flex items-center gap-3 mb-12">
+                <div class="p-2 bg-blue-600 rounded-xl text-white">
+                    <i data-lucide="box" class="w-6 h-6"></i>
                 </div>
-                <nav class="hidden md:block space-y-4">
-                    <a href="#" class="flex items-center gap-3 text-blue-600 font-medium"><i data-lucide="layout-grid" class="w-5 h-5"></i> Inventario</a>
-                    <a href="#" class="flex items-center gap-3 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><i data-lucide="shopping-cart" class="w-5 h-5"></i> Lista de Compra</a>
-                    <a href="#" class="flex items-center gap-3 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"><i data-lucide="bell" class="w-5 h-5"></i> Notificaciones</a>
-                </nav>
+                <h1 class="text-xl font-bold tracking-tight">StockEnCasa</h1>
             </div>
             
-            <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:ring-2 ring-blue-500 transition-all">
-                <i data-lucide="moon" id="theme-icon" class="w-5 h-5 text-slate-600 dark:text-yellow-400"></i>
-            </button>
-        </aside>
+            <div class="space-y-2 flex-1">
+                <button class="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-semibold">
+                    <i data-lucide="layout-dashboard"></i> Inventario
+                </button>
+                <button class="w-full flex items-center gap-3 p-3 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                    <i data-lucide="shopping-cart"></i> Lista de Compra
+                </button>
+            </div>
 
-        <main class="flex-1 p-4 md:p-10 overflow-y-auto">
-            <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <button onclick="toggleTheme()" class="flex items-center gap-3 p-3 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+                <i data-lucide="sun" id="theme-icon"></i> <span>Tema</span>
+            </button>
+        </nav>
+
+        <main class="flex-1 md:ml-72 p-6 md:p-12">
+            <header class="flex justify-between items-center mb-10">
                 <div>
-                    <h2 class="text-3xl font-bold">Mi Inventario</h2>
-                    <p class="text-slate-500">Gestiona los insumos de tu nuevo hogar.</p>
+                    <h2 class="text-3xl font-bold">Mi Stock</h2>
+                    <p class="text-slate-500 dark:text-slate-400">Control de insumos en tiempo real</p>
                 </div>
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none transition-all">
-                    <i data-lucide="plus" class="w-5 h-5"></i> Nuevo Producto
+                <button onclick="showAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20">
+                    <i data-lucide="plus"></i> Nuevo
                 </button>
             </header>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                
-                <div class="card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl text-red-600">
-                            <i data-lucide="droplets"></i>
-                        </div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest bg-red-100 text-red-700 px-2 py-1 rounded">Stock Bajo</span>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-lg">Detergente Lavavajilla</h3>
-                        <p class="text-sm text-slate-400 mb-6">Magistral - 500ml</p>
-                    </div>
-                    <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl">
-                        <button class="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors">
-                            <i data-lucide="minus" class="w-4 h-4"></i>
-                        </button>
-                        <span class="font-bold text-xl">1</span>
-                        <button class="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center hover:bg-green-50 hover:text-green-600 transition-colors">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
+            <div id="grid-productos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 </div>
-
-                <div class="card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600">
-                            <i data-lucide="archive"></i>
-                        </div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-1 rounded">Suficiente</span>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-lg">Papel Higiénico</h3>
-                        <p class="text-sm text-slate-400 mb-6">Elite Soft - 4 unidades</p>
-                    </div>
-                    <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl">
-                        <button class="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center">
-                            <i data-lucide="minus" class="w-4 h-4"></i>
-                        </button>
-                        <span class="font-bold text-xl">6</span>
-                        <button class="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
         </main>
     </div>
 
     <script>
-        // Inicializar Iconos
-        lucide.createIcons();
+        // CONFIGURACIÓN SUPABASE (Reemplaza con tus datos)
+        const SB_URL = "TU_URL_DE_SUPABASE";
+        const SB_KEY = "TU_API_KEY_ANON_DE_SUPABASE";
+        const supabase = supabase.createClient(SB_URL, SB_KEY);
 
-        // Función Modo Oscuro
-        function toggleDarkMode() {
-            const body = document.body;
-            body.classList.toggle('dark');
-            const icon = document.getElementById('theme-icon');
-            if (body.classList.contains('dark')) {
-                icon.setAttribute('data-lucide', 'sun');
-            } else {
-                icon.setAttribute('data-lucide', 'moon');
-            }
+        async function cargarStock() {
+            const { data, error } = await supabase.from('productos').select('*');
+            const grid = document.getElementById('grid-productos');
+            grid.innerHTML = '';
+            
+            data.forEach(prod => {
+                const card = `
+                    <div class="glass-card p-6 rounded-3xl transition-all hover:scale-[1.02]">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl text-blue-600">
+                                <i data-lucide="shopping-bag"></i>
+                            </div>
+                            <span class="${prod.cantidad <= prod.stock_minimo ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'} text-[10px] font-black uppercase px-3 py-1 rounded-full">
+                                ${prod.cantidad <= prod.stock_minimo ? 'Bajo' : 'OK'}
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-1">${prod.nombre}</h3>
+                        <p class="text-slate-400 text-sm mb-6">${prod.marca}</p>
+                        
+                        <div class="flex items-center justify-between bg-slate-100/50 dark:bg-slate-800 p-2 rounded-2xl">
+                            <button onclick="cambiarCant('${prod.id}', -1)" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-slate-700 shadow-sm hover:text-red-500">-</button>
+                            <span class="text-2xl font-black">${prod.cantidad}</span>
+                            <button onclick="cambiarCant('${prod.id}', 1)" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-slate-700 shadow-sm hover:text-green-500">+</button>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
             lucide.createIcons();
         }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            icon.setAttribute('data-lucide', document.body.classList.contains('dark') ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+
+        window.onload = cargarStock;
     </script>
 </body>
 </html>
