@@ -3,124 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockEnCasa Pro</title>
+    <title>StockEnCasa | Elite Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
-        .dark .glass { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .dark { background-color: #020617; color: #f8fafc; }
-        .modal { transition: opacity 0.25s ease; }
-        .hidden { display: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        
+        :root { --accent: #3b82f6; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; transition: background-color 0.5s ease; }
+        
+        /* Animación suave de entrada */
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Estilo de Tarjetas */
+        .product-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+
+        /* Dark Mode refinado */
+        .dark body { background-color: #020617; color: #f8fafc; }
+        .dark .product-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .category-pill.active { background-color: var(--accent); color: white; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-[#fcfdfe]">
 
     <div class="flex min-h-screen">
-        <nav class="hidden md:flex flex-col w-72 bg-white dark:bg-[#0f172a] border-r border-slate-200 dark:border-slate-800 p-8 fixed h-full">
-            <div class="flex items-center gap-3 mb-10">
-                <div class="p-2 bg-blue-600 rounded-xl text-white"><i data-lucide="package"></i></div>
-                <h1 class="text-xl font-bold">StockEnCasa</h1>
+        <aside class="hidden lg:flex flex-col w-72 bg-white/50 dark:bg-[#070c1b]/50 border-r border-slate-100 dark:border-slate-800 p-8 fixed h-full z-40 backdrop-blur-xl">
+            <div class="flex items-center gap-3 mb-12">
+                <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">StockEnCasa</h1>
             </div>
-            <div class="space-y-2 flex-1">
-                <button class="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-bold">
-                    <i data-lucide="layout-grid"></i> Inventario
+            
+            <div class="space-y-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 ml-2">Categorías</p>
+                <div id="sidebar-filters" class="space-y-1">
+                    </div>
+            </div>
+
+            <div class="mt-auto">
+                <button onclick="toggleTheme()" class="w-full flex items-center gap-3 p-4 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group text-slate-500">
+                    <i data-lucide="moon" id="theme-icon" class="group-hover:rotate-12 transition-transform"></i>
+                    <span class="font-medium">Modo Visual</span>
                 </button>
             </div>
-            <button onclick="toggleTheme()" class="flex items-center gap-3 p-3 text-slate-500 hover:text-blue-600 transition-all">
-                <i data-lucide="sun" id="theme-icon"></i> <span>Cambiar Tema</span>
-            </button>
-        </nav>
+        </aside>
 
-        <main class="flex-1 md:ml-72 p-6 md:p-12">
-            <header class="flex justify-between items-center mb-10">
+        <main class="flex-1 lg:ml-72 p-6 md:p-12">
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
                 <div>
-                    <h2 class="text-3xl font-extrabold tracking-tight">Mi Inventario</h2>
-                    <p class="text-slate-500">Gestiona los insumos de tu hogar.</p>
+                    <h2 class="text-4xl font-bold tracking-tight mb-2">Mi Almacén</h2>
+                    <div id="filter-indicator" class="flex gap-2 text-slate-400 font-medium italic">Todos los productos</div>
                 </div>
-                <button onclick="toggleModal(true)" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all">
-                    <i data-lucide="plus"></i> <span class="hidden sm:inline">Nuevo Producto</span>
+                <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <i data-lucide="plus-circle"></i> Nuevo Producto
                 </button>
             </header>
 
-            <div id="grid-productos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="grid-productos" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 fade-in">
                 </div>
         </main>
     </div>
 
-    <div id="modal-producto" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-md p-8 rounded-3xl shadow-2xl">
-            <h3 class="text-2xl font-bold mb-6">Nuevo Producto</h3>
-            <div class="space-y-4">
-                <input type="text" id="add-nombre" placeholder="Nombre (ej. Papel Higiénico)" class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 outline-none focus:ring-2 ring-blue-500">
-                <input type="text" id="add-marca" placeholder="Marca o Detalle" class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 outline-none focus:ring-2 ring-blue-500">
+    <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg p-10 rounded-[2.5rem] shadow-2xl border border-white/20">
+            <div class="flex justify-between items-center mb-8">
+                <h3 id="modal-title" class="text-2xl font-bold">Añadir Producto</h3>
+                <button onclick="closeModal()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><i data-lucide="x"></i></button>
+            </div>
+            <input type="hidden" id="item-id">
+            <div class="space-y-5">
+                <div>
+                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">Información Básica</label>
+                    <input type="text" id="in-nombre" placeholder="Nombre del producto" class="w-full mt-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 ring-blue-500">
+                </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="add-cantidad" placeholder="Cant. Inicial" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 outline-none">
-                    <input type="number" id="add-minimo" placeholder="Aviso Stock Bajo" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 outline-none">
+                    <input type="text" id="in-marca" placeholder="Marca" class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 ring-blue-500">
+                    <select id="in-categoria" class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 ring-blue-500">
+                        <option value="Limpieza">Limpieza</option>
+                        <option value="Almacén">Almacén</option>
+                        <option value="Higiene">Higiene</option>
+                        <option value="Bebidas">Bebidas</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">Stock Actual</label>
+                        <input type="number" id="in-cantidad" class="w-full mt-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">Aviso Crítico</label>
+                        <input type="number" id="in-minimo" class="w-full mt-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 ring-blue-500">
+                    </div>
                 </div>
             </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="toggleModal(false)" class="flex-1 p-4 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">Cancelar</button>
-                <button onclick="guardarProducto()" class="flex-1 p-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">Guardar</button>
+            <div class="flex gap-4 mt-10">
+                <button id="btn-delete" onclick="eliminarProducto()" class="hidden bg-red-50 text-red-600 px-6 rounded-2xl hover:bg-red-100"><i data-lucide="trash-2"></i></button>
+                <button onclick="guardarCambios()" class="flex-1 p-5 rounded-2xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all">Confirmar</button>
             </div>
         </div>
     </div>
 
     <script>
         const SB_URL = "https://visqrgjfpatplqtasexd.supabase.co";
-        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpc3FyZ2pmcGF0cGxxdGFzZXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5NDQ1NTEsImV4cCI6MjA4MjUyMDU1MX0.6oYSY3GckwYHdy39VpJXjUlVorez90ElUXRFRU0rX4o"; // REEMPLAZA ESTO
+        const SB_KEY = "TU_API_KEY_ANON_AQUI"; // Asegúrate de pegar tu key aquí
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-        async function cargarStock() {
-            const { data, error } = await supabaseClient.from('productos').select('*').order('nombre');
-            const grid = document.getElementById('grid-productos');
-            grid.innerHTML = '';
-            
-            data.forEach(prod => {
-                const esBajo = prod.cantidad <= prod.stock_minimo;
-                grid.innerHTML += `
-                    <div class="glass p-6 rounded-[2rem] shadow-sm transition-all hover:shadow-xl border border-white/20">
-                        <div class="flex justify-between items-start mb-6">
-                            <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl text-blue-600"><i data-lucide="package-check"></i></div>
-                            <span class="${esBajo ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'} text-[10px] font-black uppercase px-3 py-1 rounded-full">
-                                ${esBajo ? 'Stock Bajo' : 'Suficiente'}
-                            </span>
-                        </div>
-                        <h3 class="text-xl font-bold">${prod.nombre}</h3>
-                        <p class="text-slate-400 text-sm mb-6">${prod.marca}</p>
-                        <div class="flex items-center justify-between bg-slate-100/50 dark:bg-white/5 p-2 rounded-2xl border border-white/10">
-                            <button onclick="cambiarCant(${prod.id}, ${prod.cantidad - 1})" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 shadow-sm hover:bg-red-50 hover:text-red-500 transition-all font-bold text-xl">-</button>
-                            <span class="text-2xl font-black">${prod.cantidad}</span>
-                            <button onclick="cambiarCant(${prod.id}, ${prod.cantidad + 1})" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 shadow-sm hover:bg-green-50 hover:text-green-500 transition-all font-bold text-xl">+</button>
-                        </div>
-                    </div>`;
-            });
+        let currentFilter = 'Todos';
+        const categorias = ['Todos', 'Limpieza', 'Almacén', 'Higiene', 'Bebidas'];
+
+        async function init() {
+            renderSidebar();
+            cargarStock();
             lucide.createIcons();
         }
 
-        async function guardarProducto() {
-            const nombre = document.getElementById('add-nombre').value;
-            const marca = document.getElementById('add-marca').value;
-            const cantidad = parseInt(document.getElementById('add-cantidad').value);
-            const stock_minimo = parseInt(document.getElementById('add-minimo').value);
+        function renderSidebar() {
+            const container = document.getElementById('sidebar-filters');
+            container.innerHTML = categorias.map(cat => `
+                <button onclick="filtrar('${cat}')" class="category-pill w-full flex items-center justify-between p-3 rounded-xl transition-all ${currentFilter === cat ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}">
+                    <span class="font-semibold">${cat}</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            `).join('');
+            lucide.createIcons();
+        }
 
-            await supabaseClient.from('productos').insert([{ nombre, marca, cantidad, stock_minimo }]);
-            toggleModal(false);
+        async function cargarStock() {
+            let query = supabaseClient.from('productos').select('*').order('nombre');
+            if(currentFilter !== 'Todos') query = query.eq('categoria', currentFilter);
+            
+            const { data } = await query;
+            const grid = document.getElementById('grid-productos');
+            grid.innerHTML = data.map(p => {
+                const esBajo = p.cantidad <= p.stock_minimo;
+                return `
+                <div class="product-card p-7 rounded-[2.5rem] relative group overflow-hidden">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-600 dark:text-slate-400">
+                            <i data-lucide="${p.categoria === 'Limpieza' ? 'droplets' : 'box'}"></i>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="${esBajo ? 'bg-red-500' : 'bg-emerald-500'} w-2 h-2 rounded-full animate-pulse mb-2"></span>
+                            <span class="text-[10px] font-black uppercase tracking-widest ${esBajo ? 'text-red-500' : 'text-emerald-500'}">
+                                ${esBajo ? 'Reponer' : 'Óptimo'}
+                            </span>
+                        </div>
+                    </div>
+                    <div onclick="openEdit(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="cursor-pointer">
+                        <h3 class="text-2xl font-bold tracking-tight group-hover:text-blue-600 transition-colors">${p.nombre}</h3>
+                        <p class="text-slate-400 font-medium mb-8">${p.marca} • ${p.categoria}</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-[2rem]">
+                        <button onclick="cambiarCant(${p.id}, ${p.cantidad - 1})" class="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 shadow-sm hover:bg-red-50 hover:text-red-500 transition-all font-bold text-xl">-</button>
+                        <span class="flex-1 text-center text-3xl font-black tracking-tighter">${p.cantidad}</span>
+                        <button onclick="cambiarCant(${p.id}, ${p.cantidad + 1})" class="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 shadow-sm hover:bg-emerald-50 hover:text-emerald-500 transition-all font-bold text-xl">+</button>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // Lógica de Modales y CRUD
+        function openModal() {
+            resetModal();
+            document.getElementById('modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function openEdit(p) {
+            document.getElementById('modal-title').innerText = "Editar Producto";
+            document.getElementById('item-id').value = p.id;
+            document.getElementById('in-nombre').value = p.nombre;
+            document.getElementById('in-marca').value = p.marca;
+            document.getElementById('in-categoria').value = p.categoria;
+            document.getElementById('in-cantidad').value = p.cantidad;
+            document.getElementById('in-minimo').value = p.stock_minimo;
+            document.getElementById('btn-delete').classList.remove('hidden');
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        async function guardarCambios() {
+            const id = document.getElementById('item-id').value;
+            const payload = {
+                nombre: document.getElementById('in-nombre').value,
+                marca: document.getElementById('in-marca').value,
+                categoria: document.getElementById('in-categoria').value,
+                cantidad: parseInt(document.getElementById('in-cantidad').value),
+                stock_minimo: parseInt(document.getElementById('in-minimo').value)
+            };
+
+            if(id) await supabaseClient.from('productos').update(payload).eq('id', id);
+            else await supabaseClient.from('productos').insert([payload]);
+            
+            closeModal();
             cargarStock();
         }
 
-        async function cambiarCant(id, nuevaCant) {
-            if(nuevaCant < 0) return;
-            await supabaseClient.from('productos').update({ cantidad: nuevaCant }).eq('id', id);
+        async function cambiarCant(id, n) {
+            if(n < 0) return;
+            await supabaseClient.from('productos').update({ cantidad: n }).eq('id', id);
             cargarStock();
         }
 
-        function toggleModal(show) {
-            const m = document.getElementById('modal-producto');
-            show ? m.classList.remove('hidden') : m.classList.add('hidden');
+        async function eliminarProducto() {
+            const id = document.getElementById('item-id').value;
+            if(confirm('¿Seguro quieres eliminar este producto?')) {
+                await supabaseClient.from('productos').delete().eq('id', id);
+                closeModal();
+                cargarStock();
+            }
+        }
+
+        function filtrar(cat) {
+            currentFilter = cat;
+            document.getElementById('filter-indicator').innerText = cat === 'Todos' ? 'Todos los productos' : `Categoría: ${cat}`;
+            renderSidebar();
+            cargarStock();
+        }
+
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        function resetModal() {
+            document.getElementById('modal-title').innerText = "Nuevo Producto";
+            document.getElementById('item-id').value = "";
+            document.querySelectorAll('#modal input').forEach(i => i.value = "");
+            document.getElementById('btn-delete').classList.add('hidden');
         }
 
         function toggleTheme() {
@@ -130,7 +252,7 @@
             lucide.createIcons();
         }
 
-        window.onload = cargarStock;
+        window.onload = init;
     </script>
 </body>
 </html>
