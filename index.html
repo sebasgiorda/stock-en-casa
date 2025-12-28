@@ -3,105 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockEnCasa Premium</title>
+    <title>StockEnCasa Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-        :root { --primary: #2563eb; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
-        
-        /* Glassmorphism & Effects */
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.8); 
-            backdrop-filter: blur(10px); 
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-        }
-        .dark .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-        }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .dark .glass { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.05); }
         .dark { background-color: #020617; color: #f8fafc; }
+        .modal { transition: opacity 0.25s ease; }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="bg-[#f8fafc]">
+<body class="bg-slate-50 text-slate-900">
+
     <div class="flex min-h-screen">
         <nav class="hidden md:flex flex-col w-72 bg-white dark:bg-[#0f172a] border-r border-slate-200 dark:border-slate-800 p-8 fixed h-full">
-            <div class="flex items-center gap-3 mb-12">
-                <div class="p-2 bg-blue-600 rounded-xl text-white">
-                    <i data-lucide="box" class="w-6 h-6"></i>
-                </div>
-                <h1 class="text-xl font-bold tracking-tight">StockEnCasa</h1>
+            <div class="flex items-center gap-3 mb-10">
+                <div class="p-2 bg-blue-600 rounded-xl text-white"><i data-lucide="package"></i></div>
+                <h1 class="text-xl font-bold">StockEnCasa</h1>
             </div>
-            
             <div class="space-y-2 flex-1">
-                <button class="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-semibold">
-                    <i data-lucide="layout-dashboard"></i> Inventario
-                </button>
-                <button class="w-full flex items-center gap-3 p-3 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                    <i data-lucide="shopping-cart"></i> Lista de Compra
+                <button class="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-bold">
+                    <i data-lucide="layout-grid"></i> Inventario
                 </button>
             </div>
-
-            <button onclick="toggleTheme()" class="flex items-center gap-3 p-3 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
-                <i data-lucide="sun" id="theme-icon"></i> <span>Tema</span>
+            <button onclick="toggleTheme()" class="flex items-center gap-3 p-3 text-slate-500 hover:text-blue-600 transition-all">
+                <i data-lucide="sun" id="theme-icon"></i> <span>Cambiar Tema</span>
             </button>
         </nav>
 
         <main class="flex-1 md:ml-72 p-6 md:p-12">
             <header class="flex justify-between items-center mb-10">
                 <div>
-                    <h2 class="text-3xl font-bold">Mi Stock</h2>
-                    <p class="text-slate-500 dark:text-slate-400">Control de insumos en tiempo real</p>
+                    <h2 class="text-3xl font-extrabold tracking-tight">Mi Inventario</h2>
+                    <p class="text-slate-500">Gestiona los insumos de tu hogar.</p>
                 </div>
-                <button onclick="showAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20">
-                    <i data-lucide="plus"></i> Nuevo
+                <button onclick="toggleModal(true)" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all">
+                    <i data-lucide="plus"></i> <span class="hidden sm:inline">Nuevo Producto</span>
                 </button>
             </header>
 
-            <div id="grid-productos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div id="grid-productos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 </div>
         </main>
     </div>
 
+    <div id="modal-producto" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md p-8 rounded-3xl shadow-2xl">
+            <h3 class="text-2xl font-bold mb-6">Nuevo Producto</h3>
+            <div class="space-y-4">
+                <input type="text" id="add-nombre" placeholder="Nombre (ej. Papel Higiénico)" class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 outline-none focus:ring-2 ring-blue-500">
+                <input type="text" id="add-marca" placeholder="Marca o Detalle" class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 outline-none focus:ring-2 ring-blue-500">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="add-cantidad" placeholder="Cant. Inicial" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 outline-none">
+                    <input type="number" id="add-minimo" placeholder="Aviso Stock Bajo" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 outline-none">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="toggleModal(false)" class="flex-1 p-4 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">Cancelar</button>
+                <button onclick="guardarProducto()" class="flex-1 p-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // CONFIGURACIÓN SUPABASE (Reemplaza con tus datos)
-        const SB_URL = "TU_URL_DE_SUPABASE";
-        const SB_KEY = "TU_API_KEY_ANON_DE_SUPABASE";
-        const supabase = supabase.createClient(SB_URL, SB_KEY);
+        const SB_URL = "https://visqrgjfpatplqtasexd.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpc3FyZ2pmcGF0cGxxdGFzZXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5NDQ1NTEsImV4cCI6MjA4MjUyMDU1MX0.6oYSY3GckwYHdy39VpJXjUlVorez90ElUXRFRU0rX4o"; // REEMPLAZA ESTO
+        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
         async function cargarStock() {
-            const { data, error } = await supabase.from('productos').select('*');
+            const { data, error } = await supabaseClient.from('productos').select('*').order('nombre');
             const grid = document.getElementById('grid-productos');
             grid.innerHTML = '';
             
             data.forEach(prod => {
-                const card = `
-                    <div class="glass-card p-6 rounded-3xl transition-all hover:scale-[1.02]">
+                const esBajo = prod.cantidad <= prod.stock_minimo;
+                grid.innerHTML += `
+                    <div class="glass p-6 rounded-[2rem] shadow-sm transition-all hover:shadow-xl border border-white/20">
                         <div class="flex justify-between items-start mb-6">
-                            <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl text-blue-600">
-                                <i data-lucide="shopping-bag"></i>
-                            </div>
-                            <span class="${prod.cantidad <= prod.stock_minimo ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'} text-[10px] font-black uppercase px-3 py-1 rounded-full">
-                                ${prod.cantidad <= prod.stock_minimo ? 'Bajo' : 'OK'}
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl text-blue-600"><i data-lucide="package-check"></i></div>
+                            <span class="${esBajo ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'} text-[10px] font-black uppercase px-3 py-1 rounded-full">
+                                ${esBajo ? 'Stock Bajo' : 'Suficiente'}
                             </span>
                         </div>
-                        <h3 class="text-xl font-bold mb-1">${prod.nombre}</h3>
+                        <h3 class="text-xl font-bold">${prod.nombre}</h3>
                         <p class="text-slate-400 text-sm mb-6">${prod.marca}</p>
-                        
-                        <div class="flex items-center justify-between bg-slate-100/50 dark:bg-slate-800 p-2 rounded-2xl">
-                            <button onclick="cambiarCant('${prod.id}', -1)" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-slate-700 shadow-sm hover:text-red-500">-</button>
+                        <div class="flex items-center justify-between bg-slate-100/50 dark:bg-white/5 p-2 rounded-2xl border border-white/10">
+                            <button onclick="cambiarCant(${prod.id}, ${prod.cantidad - 1})" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 shadow-sm hover:bg-red-50 hover:text-red-500 transition-all font-bold text-xl">-</button>
                             <span class="text-2xl font-black">${prod.cantidad}</span>
-                            <button onclick="cambiarCant('${prod.id}', 1)" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-slate-700 shadow-sm hover:text-green-500">+</button>
+                            <button onclick="cambiarCant(${prod.id}, ${prod.cantidad + 1})" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 shadow-sm hover:bg-green-50 hover:text-green-500 transition-all font-bold text-xl">+</button>
                         </div>
-                    </div>
-                `;
-                grid.innerHTML += card;
+                    </div>`;
             });
             lucide.createIcons();
+        }
+
+        async function guardarProducto() {
+            const nombre = document.getElementById('add-nombre').value;
+            const marca = document.getElementById('add-marca').value;
+            const cantidad = parseInt(document.getElementById('add-cantidad').value);
+            const stock_minimo = parseInt(document.getElementById('add-minimo').value);
+
+            await supabaseClient.from('productos').insert([{ nombre, marca, cantidad, stock_minimo }]);
+            toggleModal(false);
+            cargarStock();
+        }
+
+        async function cambiarCant(id, nuevaCant) {
+            if(nuevaCant < 0) return;
+            await supabaseClient.from('productos').update({ cantidad: nuevaCant }).eq('id', id);
+            cargarStock();
+        }
+
+        function toggleModal(show) {
+            const m = document.getElementById('modal-producto');
+            show ? m.classList.remove('hidden') : m.classList.add('hidden');
         }
 
         function toggleTheme() {
